@@ -1,0 +1,10 @@
+/Users/athanasiapharmake/Desktop/workspace/keyrock-technical-challenge/order-book-publisher/server/order-book-service/target/debug/deps/which-ea3043d1d55303ab.rmeta: /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/lib.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/checker.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/error.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/finder.rs
+
+/Users/athanasiapharmake/Desktop/workspace/keyrock-technical-challenge/order-book-publisher/server/order-book-service/target/debug/deps/libwhich-ea3043d1d55303ab.rlib: /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/lib.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/checker.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/error.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/finder.rs
+
+/Users/athanasiapharmake/Desktop/workspace/keyrock-technical-challenge/order-book-publisher/server/order-book-service/target/debug/deps/which-ea3043d1d55303ab.d: /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/lib.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/checker.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/error.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/finder.rs
+
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/lib.rs:
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/checker.rs:
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/error.rs:
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/which-4.3.0/src/finder.rs:

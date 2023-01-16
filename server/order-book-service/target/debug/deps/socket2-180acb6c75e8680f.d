@@ -1,0 +1,9 @@
+/Users/athanasiapharmake/Desktop/workspace/keyrock-technical-challenge/order-book-publisher/server/order-book-service/target/debug/deps/socket2-180acb6c75e8680f.rmeta: /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/lib.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sockaddr.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/socket.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sockref.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sys/unix.rs
+
+/Users/athanasiapharmake/Desktop/workspace/keyrock-technical-challenge/order-book-publisher/server/order-book-service/target/debug/deps/socket2-180acb6c75e8680f.d: /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/lib.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sockaddr.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/socket.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sockref.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sys/unix.rs
+
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/lib.rs:
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sockaddr.rs:
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/socket.rs:
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sockref.rs:
+/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/socket2-0.4.7/src/sys/unix.rs:

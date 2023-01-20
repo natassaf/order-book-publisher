@@ -6,19 +6,22 @@ A system composed of a client and a server. The client is writen in VueJS and pr
  tokens and exchanges and retrieve an order book with the top ten bids and top ten asks and the spread.
 
 ## Client
+*************
 
-#### Install
+#### Usage
 
-΄΄΄  npm install ΄΄΄
-
-΄΄΄ npm run serve ΄΄΄
+``` 
+npm install 
+npm run serve 
+```
 
 ## Server
+*************
+
+#### Usage
  
-΄΄΄ cargo build ΄΄΄
-
-΄΄΄ cargo run --bin order-book-server ΄΄΄
-
-΄΄΄ cargo run --bin ΄΄΄
-3
-​
+``` 
+cargo build 
+cargo run --bin order-book-server 
+cargo run --bin 
+```

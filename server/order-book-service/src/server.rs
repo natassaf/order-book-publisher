@@ -1,7 +1,9 @@
-use std::error::Error;
-
 use orderbook::orderbook_aggregator_server::{OrderbookAggregator, OrderbookAggregatorServer};
 use orderbook::{Level, Summary};
+use std::error::Error;
+use std::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc;
+use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Request, Response, Status};
 
 pub mod orderbook {
@@ -14,7 +16,7 @@ impl Summary {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct MyOrderbookAggregator {}
 
 impl MyOrderbookAggregator {
@@ -25,23 +27,34 @@ impl MyOrderbookAggregator {
 
 #[tonic::async_trait]
 impl OrderbookAggregator for MyOrderbookAggregator {
+    type BookSummaryStream = ReceiverStream<Result<Summary, Status>>;
+
     async fn book_summary(
         &self,
-        request: Request<()>,
+        request: Request<orderbook::Empty>,
     ) -> Result<tonic::Response<Self::BookSummaryStream>, tonic::Status> {
-        Ok(Response::new(Summary::new(0.0, vec![], vec![])))
+        let (tx, rx) = mpsc::channel(4);
+
+        // let features = .clone();
+        let summary = Summary::new(0.0, vec![], vec![]);
+        
+        tokio::spawn(async move {
+            tx.send(Ok(summary.clone())).await.unwrap();
+        });
+        
+
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
-    let greeter = MyOrderbookAggregator::default();
+    let my_order_book_aggregator = MyOrderbookAggregator::default();
 
     Server::builder()
-        .add_service(MyOrderbookAggregator::new())
+        .add_service(OrderbookAggregatorServer::new(my_order_book_aggregator))
         .serve(addr)
         .await?;
-
     Ok(())
 }

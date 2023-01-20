@@ -1,9 +1,0 @@
-/Users/athanasiapharmake/Desktop/workspace/keyrock-technical-challenge/order-book-publisher/server/order-book-service/target/debug/deps/prost-a0826611b5819a0a.rmeta: /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/lib.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/error.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/message.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/types.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/encoding.rs
-
-/Users/athanasiapharmake/Desktop/workspace/keyrock-technical-challenge/order-book-publisher/server/order-book-service/target/debug/deps/prost-a0826611b5819a0a.d: /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/lib.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/error.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/message.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/types.rs /Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/encoding.rs
-
-/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/lib.rs:
-/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/error.rs:
-/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/message.rs:
-/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/types.rs:
-/Users/athanasiapharmake/.cargo/registry/src/github.com-1ecc6299db9ec823/prost-0.10.4/src/encoding.rs:

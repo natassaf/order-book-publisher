@@ -1,2 +1,2 @@
 cargo:rerun-if-changed=proto/order-book.proto
-cargo:rerun-if-changed=.
+cargo:rerun-if-changed=proto

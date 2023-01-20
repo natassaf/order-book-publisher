@@ -13,7 +13,19 @@ A system composed of a client and a server. The client is writen in VueJS and pr
 ``` 
 npm install 
 npm run serve 
+
+cd ../../
+protoc --proto_path=protos --js_out=import_style=commonjs,binary:client/spread-publisher/src/ --grpc-web_out=import_style=commonjs,mode=grpcwebtext:client/spread-publisher/src/ protos/order-book.proto
+
 ```
+
+*** Deploy Envoy Docker Container ***
+``` 
+cd envoy
+docker build -t envoy-img .
+sudo docker run  -p 8080:8080 --net=host  envoy-img
+
+``` 
 
 ## Server
 *************

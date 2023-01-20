@@ -34,7 +34,7 @@ impl OrderbookAggregator for MyOrderbookAggregator {
         request: Request<orderbook::Empty>,
     ) -> Result<tonic::Response<Self::BookSummaryStream>, tonic::Status> {
         let (tx, rx) = mpsc::channel(4);
-
+        println!("Running book_summsry");
         // let features = .clone();
         let summary = Summary::new(0.0, vec![], vec![]);
         
@@ -49,7 +49,7 @@ impl OrderbookAggregator for MyOrderbookAggregator {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50051".parse()?;
+    let addr = "[::1]:14586".parse()?;
     let my_order_book_aggregator = MyOrderbookAggregator::default();
 
     Server::builder()

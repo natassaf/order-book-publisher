@@ -39,6 +39,9 @@
 
 <script>
 import OrderBookVisualizer from './components/OrderBookVisualizer.vue';
+import { OrderbookAggregatorClient } from './order-book_grpc_web_pb';
+import { Empty } from "./order-book_pb";
+
 
 export default {
   name: 'App',
@@ -53,7 +56,8 @@ export default {
       tokens: [],
       connectionFlag: false,
       loadingFlag: false,
-      orderBookResponse: false
+      orderBookResponse: false,
+      response:null
     }
   },
   methods: {
@@ -67,6 +71,9 @@ export default {
     requestOrderBook() {
       this.loadingFlag = true;
       this.orderBookResponse = true;
+      this.response = this.client.bookSummary(new Empty());
+      alert("BookSummmaryResponse: "+ this.response);
+      
     }
 
   },
@@ -78,7 +85,9 @@ export default {
         alert("Please select only 2 tokens");
       }
     }
-
+  },
+  created:function(){
+    this.client  = new OrderbookAggregatorClient("http://localhost:8080", null, null);
   }
 
 }

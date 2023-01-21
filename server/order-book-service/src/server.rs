@@ -1,5 +1,4 @@
 use orderbook::orderbook_aggregator_server::{OrderbookAggregator, OrderbookAggregatorServer};
-use orderbook::{Level, Summary};
 use std::net::SocketAddr;
 use std::sync::mpsc::{Receiver, Sender};
 use tokio::sync::mpsc;
@@ -9,17 +8,18 @@ use tonic_web::GrpcWebLayer;
 use tower_http::cors::{Any, CorsLayer};
 use http::Method;
 
+mod api_objects;
+use api_objects::{Summary, Exchange};
 
+use crate::api_objects::PairCurrencies;
+
+
+mod book_summary_endpoint;
 
 pub mod orderbook {
     tonic::include_proto!("orderbook");
 }
 
-impl Summary {
-    pub fn new(spread: f64, bids: Vec<Level>, asks: Vec<Level>) -> Self {
-        Summary { spread, bids, asks }
-    }
-}
 
 #[derive(Clone, Debug, Default)]
 pub struct MyOrderbookAggregator {}
@@ -38,15 +38,14 @@ impl OrderbookAggregator for MyOrderbookAggregator {
         &self,
         request: Request<orderbook::Empty>,
     ) -> Result<tonic::Response<Self::BookSummaryStream>, tonic::Status> {
-        let (tx, rx) = mpsc::channel(4);
+
         println!("Running book_summsry");
-        // let features = .clone();
-        let summary = Summary::new(0.0, vec![], vec![]);
+        let (tx, rx) = mpsc::channel(4);
         
         tokio::spawn(async move {
-            tx.send(Ok(summary.clone())).await.unwrap();
+            let result:Result<Summary, Status> = book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP);
+            tx.send(result).await.unwrap();
         });
-        
 
         Ok(Response::new(ReceiverStream::new(rx)))
     }

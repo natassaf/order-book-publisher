@@ -87,7 +87,8 @@ export default {
     }
   },
   created:function(){
-    this.client  = new OrderbookAggregatorClient("http://localhost:8080", null, null);
+    console.log("Created cliend running at 14586")
+    this.client  = new OrderbookAggregatorClient("http://localhost:14586", null, null);
   }
 
 }

@@ -5,6 +5,7 @@ import 'vue3-easy-data-table/dist/style.css';
 
 import OrderBookVisualizer from "./components/OrderBookVisualizer.vue";
 const app = createApp(App);
+
 app.component('EasyDataTable', Vue3EasyDataTable);
 
 app.component("order-book-visualizer", OrderBookVisualizer);

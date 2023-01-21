@@ -1,10 +1,15 @@
 use orderbook::orderbook_aggregator_server::{OrderbookAggregator, OrderbookAggregatorServer};
 use orderbook::{Level, Summary};
-use std::error::Error;
+use std::net::SocketAddr;
 use std::sync::mpsc::{Receiver, Sender};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Request, Response, Status};
+use tonic_web::GrpcWebLayer;
+use tower_http::cors::{Any, CorsLayer};
+use http::Method;
+
+
 
 pub mod orderbook {
     tonic::include_proto!("orderbook");
@@ -49,11 +54,17 @@ impl OrderbookAggregator for MyOrderbookAggregator {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:14586".parse()?;
-    let my_order_book_aggregator = MyOrderbookAggregator::default();
+    let addr:SocketAddr = "[::1]:14586".parse()?;
+    let my_order_book_aggregator = OrderbookAggregatorServer::new(MyOrderbookAggregator::default());
+    println!("OrderbookAggregatorServer running on {:?}", &addr);
+    let cors = CorsLayer::new().allow_headers(Any).allow_methods([Method::POST]).allow_origin(Any);
+
 
     Server::builder()
-        .add_service(OrderbookAggregatorServer::new(my_order_book_aggregator))
+        .accept_http1(true)
+        .layer(cors)
+        .layer(GrpcWebLayer::new())
+        .add_service(my_order_book_aggregator)
         .serve(addr)
         .await?;
     Ok(())

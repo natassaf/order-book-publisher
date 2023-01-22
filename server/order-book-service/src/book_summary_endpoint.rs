@@ -1,11 +1,13 @@
 use crate::api_objects::{Asks, Bids, Exchange, Level, PairCurrencies, Spread, Summary};
 use tonic::Status;
+use tokio::time::{sleep, Duration};
 
-fn calculate_spread(highest_bid: &Level, lowest_ask: &Level) -> Spread {
+async fn calculate_spread(highest_bid: &Level, lowest_ask: &Level) -> Spread {
     lowest_ask.price - highest_bid.price
 }
 
-fn pull_orders(pair_currencies: &PairCurrencies, exchange: &Exchange) -> (Asks, Bids) {
+async fn pull_orders(pair_currencies: &PairCurrencies, exchange: &Exchange) -> (Asks, Bids) {
+    sleep(Duration::from_millis(3000)).await;
     match exchange {
         Exchange::BINANCE => {
             let order1: Level = Level::new(Into::<String>::into(*exchange), 8491.25, 0.008);
@@ -25,7 +27,7 @@ fn pull_orders(pair_currencies: &PairCurrencies, exchange: &Exchange) -> (Asks, 
     }
 }
 
-fn sort_levels<'a>(orders: &'a mut Vec<Level>, ascending: bool) -> &'a Vec<Level> {
+async fn sort_levels<'a>(orders: &'a mut Vec<Level>, ascending: bool) -> &'a Vec<Level> {
     if ascending {
         orders.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
     } else {
@@ -34,24 +36,24 @@ fn sort_levels<'a>(orders: &'a mut Vec<Level>, ascending: bool) -> &'a Vec<Level
     orders
 }
 
-fn merge_orders(orders1: &Vec<Level>, orders2: &Vec<Level>) -> Vec<Level> {
+async fn merge_orders(orders1: &Vec<Level>, orders2: &Vec<Level>) -> Vec<Level> {
     [orders1.clone(), orders2.clone()].concat()
 }
 
-pub fn process(
+pub async fn process(
     pair_currencies: PairCurrencies,
     exchange1: Exchange,
     exchange2: Exchange,
 ) -> Result<Summary, Status> {
-    let (bid_orders_exch1, ask_orders_exch1) = pull_orders(&pair_currencies, &exchange1);
-    let (bid_orders_exch2, ask_orders_exch2) = pull_orders(&pair_currencies, &exchange2);
+    let (bid_orders_exch1, ask_orders_exch1) = pull_orders(&pair_currencies, &exchange1).await;
+    let (bid_orders_exch2, ask_orders_exch2) = pull_orders(&pair_currencies, &exchange2).await;
 
-    let mut merged_bids: Vec<Level> = merge_orders(&bid_orders_exch1, &bid_orders_exch2);
-    let mut merged_asks: Vec<Level> = merge_orders(&ask_orders_exch1, &ask_orders_exch2);
+    let mut merged_bids: Vec<Level> = merge_orders(&bid_orders_exch1, &bid_orders_exch2).await;
+    let mut merged_asks: Vec<Level> = merge_orders(&ask_orders_exch1, &ask_orders_exch2).await;
 
-    let sorted_bids: &Vec<Level> = sort_levels(&mut merged_bids, true);
-    let sorted_asks: &Vec<Level> = sort_levels(&mut merged_asks, true);
-    let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap());
+    let sorted_bids: &Vec<Level> = sort_levels(&mut merged_bids, true).await;
+    let sorted_asks: &Vec<Level> = sort_levels(&mut merged_asks, true).await;
+    let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap()).await;
 
     let summary = Summary::new(spread, sorted_bids.clone(), sorted_asks.clone());
     Ok(summary)

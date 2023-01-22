@@ -57,7 +57,7 @@ export default {
       connectionFlag: false,
       loadingFlag: false,
       orderBookResponse: false,
-      response:null
+      response: null
     }
   },
   methods: {
@@ -71,9 +71,14 @@ export default {
     requestOrderBook() {
       this.loadingFlag = true;
       this.orderBookResponse = true;
-      this.response = this.client.bookSummary(new Empty());
-      alert("BookSummmaryResponse: "+ this.response);
-      
+      this.response = this.client.bookSummary(new Empty()).on("data",
+        response => {
+          console.log("response:  "+response.getSpread());
+          console.log("response bids:  "+response.getBidsList());
+          console.log("response bids:  "+response.getAsksList());
+          
+        });
+
     }
 
   },
@@ -86,9 +91,9 @@ export default {
       }
     }
   },
-  created:function(){
+  created: function () {
     console.log("Created cliend running at 14586")
-    this.client  = new OrderbookAggregatorClient("http://localhost:14586", null, null);
+    this.client = new OrderbookAggregatorClient("http://localhost:14586", null, null);
   }
 
 }

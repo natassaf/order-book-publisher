@@ -8,6 +8,7 @@ use tonic_web::GrpcWebLayer;
 use tower_http::cors::{Any, CorsLayer};
 use http::Method;
 
+
 mod api_objects;
 use api_objects::{Summary, Exchange};
 
@@ -43,9 +44,13 @@ impl OrderbookAggregator for MyOrderbookAggregator {
         let (tx, rx) = mpsc::channel(4);
         
         tokio::spawn(async move {
-            let result:Result<Summary, Status> = book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP);
-            println!("result: {:?}", result.clone().unwrap());
-            tx.send(result).await.unwrap();
+            for i in 0..10{
+                let result:Result<Summary, Status> = book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP).await;
+                println!("{:?}",i);
+                println!("result: {:?}", result.clone().unwrap());
+                tx.send(result).await.unwrap();
+            }
+
         });
 
         Ok(Response::new(ReceiverStream::new(rx)))

@@ -26,7 +26,11 @@ fn pull_orders(pair_currencies: &PairCurrencies, exchange: &Exchange) -> (Asks, 
 }
 
 fn sort_levels<'a>(orders: &'a mut Vec<Level>, ascending: bool) -> &'a Vec<Level> {
-    orders.sort_by(|a, b| b.price.partial_cmp(&a.price).unwrap());
+    if ascending {
+        orders.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
+    } else {
+        orders.sort_by(|a, b| b.price.partial_cmp(&a.price).unwrap());
+    }
     orders
 }
 
@@ -47,9 +51,67 @@ pub fn process(
 
     let sorted_bids: &Vec<Level> = sort_levels(&mut merged_bids, true);
     let sorted_asks: &Vec<Level> = sort_levels(&mut merged_asks, true);
-
     let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap());
 
     let summary = Summary::new(spread, sorted_bids.clone(), sorted_asks.clone());
     Ok(summary)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api_objects::Level;
+
+    fn round_to(num: f64, num_digits: i32) -> f64 
+    {
+        let multiplier:f64 = (10 as i64).pow(num_digits.try_into().unwrap()) as f64;
+        ((num * multiplier).round()/multiplier) as f64
+
+    }
+
+    #[test]
+    fn test_sort_levels() {
+        let order1: Level = Level::new("binance".to_string(), 8491.25, 0.008);
+        let order2 = Level::new("bitstamp".to_string(), 8496.37, 0.0303);
+        let order3: Level = Level::new("binance".to_string(), 8488.53, 0.002);
+        let order4 = Level::new("bitstamp".to_string(), 8484.71, 1.0959);
+
+        // ascending order
+        let mut asks = vec![order2.clone(), order1.clone()];
+        let mut bids = vec![order3.clone(), order4.clone()];
+
+        let sorted_asks = sort_levels(&mut asks, true);
+        let sorted_bids = sort_levels(&mut bids, true);
+
+        assert_eq!(*sorted_asks, vec![order1.clone(), order2.clone()]);
+        assert_eq!(*sorted_bids, vec![order4.clone(), order3.clone()]);
+
+        // descending order
+        let mut asks = vec![order1.clone(), order2.clone()];
+        let mut bids = vec![order4.clone(), order3.clone()];
+
+        let sorted_asks = sort_levels(&mut asks, false);
+        let sorted_bids = sort_levels(&mut bids, false);
+
+        assert_eq!(*sorted_asks, vec![order2, order1]);
+        assert_eq!(*sorted_bids, vec![order3, order4]);
+    }
+
+    #[test]
+    fn test_spread() {
+        let order1: Level = Level::new("binance".to_string(), 8491.25, 0.008);
+        let order2 = Level::new("bitstamp".to_string(), 8496.37, 0.0303);
+        let order3: Level = Level::new("binance".to_string(), 8488.53, 0.002);
+        let order4 = Level::new("bitstamp".to_string(), 8484.71, 1.0959);
+
+        // ascending order
+        let mut asks = vec![order1.clone(), order2.clone()];
+        let mut bids = vec![order3.clone(), order4.clone()];
+
+        let sorted_asks = sort_levels(&mut asks, true);
+        let sorted_bids = sort_levels(&mut bids, true);
+
+        let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap());
+        assert_eq!(2.72, round_to(spread,2 as i32))
+    }
 }

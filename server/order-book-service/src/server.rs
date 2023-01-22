@@ -44,6 +44,7 @@ impl OrderbookAggregator for MyOrderbookAggregator {
         
         tokio::spawn(async move {
             let result:Result<Summary, Status> = book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP);
+            println!("result: {:?}", result.clone().unwrap());
             tx.send(result).await.unwrap();
         });
 

@@ -2,37 +2,39 @@
   <header> Spread Monitor</header>
 
   <body>
-    <form @submit.prevent="submitForm">
+    <div>
+      <form @submit.prevent="submitForm">
+        <div class="box">
+
+          <h3> Select market tokens </h3>
+
+          <div v-for="token in availableTokens" :key="token">
+            <input type="checkbox" :id="token" :value="token" v-model="selectedTokens">
+            <label>{{ token }}</label>
+          </div>
+          <br>
+          <div>
+            <button @click="saveTokenChoices">Submit</button>
+          </div>
+
+        </div>
+      </form>
+
       <div class="box">
-
-        <h3> Select market tokens </h3>
-
-        <div v-for="token in availableTokens" :key="token">
-          <input type="checkbox" :id="token" :value="token" v-model="selectedTokens">
-          <label>{{ token }}</label>
+        <b>Exchanges: </b> Binance, Bitstamp <br><br>
+        <b>Selected tokens: </b> {{ selectedTokensFlag? tokens.join(" ") : ""}} <br> <br>
+        <button @click="requestConnection"> Connect with exchanges</button> <br><br>
+        <div v-if="connectionFlag">
+          <button @click="requestOrderBook"> Request order book </button>
+          {{ loadingFlag? "Loading...": "" }}
         </div>
-        <br>
-        <div>
-          <button @click="saveTokenChoices">Submit</button>
-        </div>
+        <br><br>
+        <h3>Spread: {{ spread }}</h3>
+        <div v-if="items"><order-book-visualizer :items="items"></order-book-visualizer></div>
+
 
       </div>
-    </form>
-
-    <div class="box">
-      <b>Exchanges: </b> Binance, Bitstamp <br><br>
-      <b>Selected tokens: </b> {{ selectedTokensFlag? tokens.join(" ") : ""}} <br> <br>
-      <button @click="requestConnection"> Connect with exchanges</button> <br><br>
-      <div v-if="connectionFlag">
-        <button @click="requestOrderBook"> Request order book </button>
-        {{ loadingFlag? "Loading...": "" }}
-      </div>
-      <br><br>
-      <div v-if="orderBookResponse"><order-book-visualizer></order-book-visualizer></div>
-
-
     </div>
-
 
   </body>
 </template>
@@ -57,7 +59,9 @@ export default {
       connectionFlag: false,
       loadingFlag: false,
       orderBookResponse: false,
-      response: null
+      response: null,
+      items: [],
+      spread: null
     }
   },
   methods: {
@@ -73,10 +77,23 @@ export default {
       this.orderBookResponse = true;
       this.response = this.client.bookSummary(new Empty()).on("data",
         response => {
-          console.log("response:  "+response.getSpread());
-          console.log("response bids:  "+response.getBidsList());
-          console.log("response bids:  "+response.getAsksList());
-          
+          let spread = response.getSpread();
+          let bids = response.getBidsList();
+          let asks = response.getAsksList();
+
+          let items = []
+          for (let i = 0; i <asks.length ; i++){
+            let level = {"exchange": asks[i].getExchange(), "price": asks[i].getPrice(), "amount": asks[i].getAmount(), "order_type": "ask"};
+            items.push(level);
+          }
+
+          for (let i = 0; i <bids.length ; i++){
+            let level = {"exchange": bids[i].getExchange(), "price": bids[i].getPrice(), "amount": bids[i].getAmount(), "order_type": "bid"};
+            items.push(level);
+          }
+
+          this.items = items;
+          this.spread = spread;
         });
 
     }

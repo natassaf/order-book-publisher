@@ -68,8 +68,8 @@ mod tests {
     use crate::api_objects::Level;
     use crate::utils::round_to;
 
-    #[test]
-    fn test_sort_levels() {
+    #[tokio::test]
+    async fn test_sort_levels() {
         let order1: Level = Level::new("binance".to_string(), 8491.25, 0.008);
         let order2 = Level::new("bitstamp".to_string(), 8496.37, 0.0303);
         let order3: Level = Level::new("binance".to_string(), 8488.53, 0.002);
@@ -79,8 +79,8 @@ mod tests {
         let mut asks = vec![order2.clone(), order1.clone()];
         let mut bids = vec![order3.clone(), order4.clone()];
 
-        let sorted_asks = sort_levels(&mut asks, true);
-        let sorted_bids = sort_levels(&mut bids, true);
+        let sorted_asks = sort_levels(&mut asks, true).await;
+        let sorted_bids = sort_levels(&mut bids, true).await;
 
         assert_eq!(*sorted_asks, vec![order1.clone(), order2.clone()]);
         assert_eq!(*sorted_bids, vec![order4.clone(), order3.clone()]);
@@ -89,15 +89,15 @@ mod tests {
         let mut asks = vec![order1.clone(), order2.clone()];
         let mut bids = vec![order4.clone(), order3.clone()];
 
-        let sorted_asks = sort_levels(&mut asks, false);
-        let sorted_bids = sort_levels(&mut bids, false);
+        let sorted_asks = sort_levels(&mut asks, false).await;
+        let sorted_bids = sort_levels(&mut bids, false).await;
 
         assert_eq!(*sorted_asks, vec![order2, order1]);
         assert_eq!(*sorted_bids, vec![order3, order4]);
     }
 
-    #[test]
-    fn test_spread() {
+    #[tokio::test]
+    async fn test_spread() {
         let order1: Level = Level::new("binance".to_string(), 8491.25, 0.008);
         let order2 = Level::new("bitstamp".to_string(), 8496.37, 0.0303);
         let order3: Level = Level::new("binance".to_string(), 8488.53, 0.002);
@@ -107,8 +107,8 @@ mod tests {
         let mut asks = vec![order1.clone(), order2.clone()];
         let mut bids = vec![order3.clone(), order4.clone()];
 
-        let sorted_asks = sort_levels(&mut asks, true);
-        let sorted_bids = sort_levels(&mut bids, true);
+        let sorted_asks = sort_levels(&mut asks, true).await;
+        let sorted_bids = sort_levels(&mut bids, true).await;
 
         let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap()).await;
         assert_eq!(2.72, round_to(spread, 2 as i32))

@@ -110,7 +110,7 @@ mod tests {
         let sorted_asks = sort_levels(&mut asks, true);
         let sorted_bids = sort_levels(&mut bids, true);
 
-        let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap());
+        let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap()).await;
         assert_eq!(2.72, round_to(spread, 2 as i32))
     }
 }

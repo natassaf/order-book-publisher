@@ -1,7 +1,7 @@
 use orderbook::orderbook_aggregator_server::{OrderbookAggregator, OrderbookAggregatorServer};
-use std::net::SocketAddr;
-use std::sync::mpsc::{Receiver, Sender};
-use tokio::sync::mpsc;
+use std::{sync::{Arc}, net::SocketAddr};
+
+use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Request, Response, Status};
 use tonic_web::GrpcWebLayer;
@@ -11,10 +11,12 @@ use http::Method;
 
 mod api_objects;
 mod utils;
+mod pull_orders;
+
 
 use api_objects::{Summary, Exchange};
 
-use crate::api_objects::PairCurrencies;
+use crate::{api_objects::PairCurrencies, pull_orders::Binance};
 
 
 mod book_summary_endpoint;
@@ -44,9 +46,14 @@ impl OrderbookAggregator for MyOrderbookAggregator {
 
         println!("Running book_summsry");
         let (tx, rx) = mpsc::channel(4);
-        
+    
         tokio::spawn(async move {
             for i in 0..10{
+                // let binance = Binance::new();
+                // let (write, read) = binance.establish_connection().await;
+            
+
+                // let result = binance.pull_orders(PairCurrencies::ETHBTC, socket).await;
                 let result:Result<Summary, Status> = book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP, i).await;
                 println!("{:?}",i);
                 println!("result: {:?}", result.clone().unwrap());

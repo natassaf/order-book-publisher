@@ -1,8 +1,11 @@
-use crate::api_objects::{Asks, Bids, Exchange, Level, PairCurrencies, Spread, Summary};
-use tokio::time::{sleep, Duration};
+use std::sync::{Arc};
+
+use crate::{api_objects::{Asks, Bids, Exchange, Level, PairCurrencies, Spread, Summary}, pull_orders::Binance};
+use tokio::{time::{sleep, Duration}, net::TcpStream, sync::Mutex};
+use tokio_tungstenite::{WebSocketStream, MaybeTlsStream};
 use tonic::Status;
 use crate::utils::round_to;
-
+use crate::pull_orders::traits::OrdersPuller;
 
 async fn calculate_spread(highest_bid: &Level, lowest_ask: &Level) -> Spread {
     lowest_ask.price - highest_bid.price
@@ -42,12 +45,13 @@ async fn merge_orders(orders1: &Vec<Level>, orders2: &Vec<Level>) -> Vec<Level> 
     [orders1.clone(), orders2.clone()].concat()
 }
 
-pub async fn process(
+pub async fn process<'a>(
     pair_currencies: PairCurrencies,
     exchange1: Exchange,
     exchange2: Exchange,
     num: usize,
 ) -> Result<Summary, Status> {
+
     let (ask_orders_exch1, bid_orders_exch1) = pull_orders(&pair_currencies, &exchange1, num).await;
     let (ask_orders_exch2, bid_orders_exch2) = pull_orders(&pair_currencies, &exchange2, num).await;
 

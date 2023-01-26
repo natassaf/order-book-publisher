@@ -1,5 +1,3 @@
-use std::{error::Error, io::{self, ErrorKind}};
-
 use crate::orderbook;
 pub use orderbook::{Level, Summary};
 pub type Spread=f64;

@@ -3,7 +3,9 @@ name = "order-book-service"
 version = "0.1.0"
 edition = "2021"
 
-
+[[bin]]
+path="src/main.rs"
+name="connect-exchanges"
 
 [[bin]]
 path = "src/server.rs"
@@ -19,6 +21,11 @@ tokio-stream = "0.1.11"
 tonic-web = "0.5.0"
 tower-http = { version = "0.3.5", features = ["cors"] }
 http = "0.2.8"
+futures-channel = "0.3.25"
+url = "2.3.1"
+tokio-tungstenite = {version="0.16.0", features = ["native-tls"]}
+futures-util = "0.3.25"
+
 
 [build-dependencies]
 tonic-build = "0.8.4"

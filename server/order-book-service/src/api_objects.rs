@@ -1,8 +1,10 @@
-use crate::orderbook;
+use crate::{orderbook, exchanges::data_structs::OfferData};
 pub use orderbook::{Level, Summary};
 pub type Spread=f64;
 pub type Bids = Vec<Level>;
 pub type Asks = Vec<Level>;
+pub type Price = f64;
+pub type Amount = f64;
 
 impl Summary {
     pub fn new(spread: Spread, bids: Vec<Level>, asks: Vec<Level>) -> Self {
@@ -13,6 +15,10 @@ impl Summary {
 impl Level{
     pub fn new(exchange:String, price:f64, amount:f64)->Self{
         Level { exchange, price, amount }
+    }
+
+    pub fn from_offer_data(exchange:&Exchange, item:OfferData)->Self{
+        Level::new(Into::<String>::into(*exchange), item.price as f64, item.size as f64)
     }
 }
 

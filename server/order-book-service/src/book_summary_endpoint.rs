@@ -1,30 +1,49 @@
-use std::sync::{Arc};
-
-use crate::{api_objects::{Asks, Bids, Exchange, Level, PairCurrencies, Spread, Summary}, pull_orders::Binance};
-use tokio::{time::{sleep, Duration}, net::TcpStream, sync::Mutex};
-use tokio_tungstenite::{WebSocketStream, MaybeTlsStream};
-use tonic::Status;
 use crate::utils::round_to;
-use crate::pull_orders::traits::OrdersPuller;
+use crate::{
+    api_objects::{Asks, Bids, Exchange, Level, PairCurrencies, Spread, Summary},
+    exchanges::Binance,
+};
+use tokio::time::{sleep, Duration};
+use tonic::Status;
 
 async fn calculate_spread(highest_bid: &Level, lowest_ask: &Level) -> Spread {
     lowest_ask.price - highest_bid.price
 }
 
-async fn pull_orders(pair_currencies: &PairCurrencies, exchange: &Exchange, num:usize) -> (Asks, Bids) {
+async fn pull_orders(
+    pair_currencies: &PairCurrencies,
+    exchange: &Exchange,
+    num: usize,
+) -> (Asks, Bids) {
     sleep(Duration::from_millis(500)).await;
     match exchange {
         Exchange::BINANCE => {
-            let order1: Level = Level::new(Into::<String>::into(*exchange), 8491.25+ num as f64, 0.008 + num as f64);
-            let order3: Level = Level::new(Into::<String>::into(*exchange), 8488.53+ num as f64, 0.002+ num as f64);
+            let order1: Level = Level::new(
+                Into::<String>::into(*exchange),
+                8491.25 + num as f64,
+                0.008 + num as f64,
+            );
+            let order3: Level = Level::new(
+                Into::<String>::into(*exchange),
+                8488.53 + num as f64,
+                0.002 + num as f64,
+            );
 
             let asks = vec![order1];
             let bids = vec![order3];
             (asks, bids)
         }
         Exchange::BITSTAMP => {
-            let order2 = Level::new(Into::<String>::into(*exchange), 8496.37+ num as f64, 0.0303+ num as f64);
-            let order4 = Level::new(Into::<String>::into(*exchange), 8484.71+ num as f64, 1.0959+ num as f64);
+            let order2 = Level::new(
+                Into::<String>::into(*exchange),
+                8496.37 + num as f64,
+                0.0303 + num as f64,
+            );
+            let order4 = Level::new(
+                Into::<String>::into(*exchange),
+                8484.71 + num as f64,
+                1.0959 + num as f64,
+            );
             let asks = vec![order2];
             let bids = vec![order4];
             (asks, bids)
@@ -51,9 +70,37 @@ pub async fn process<'a>(
     exchange2: Exchange,
     num: usize,
 ) -> Result<Summary, Status> {
+    let mut rx1 = match exchange1 {
+        Exchange::BINANCE => {
+            let exchange = Binance::new();
+            exchange.pull_orders(&pair_currencies).await.unwrap()
+        }
+        Exchange::BITSTAMP => {
+            let exchange = Binance::new();
+            exchange.pull_orders(&pair_currencies).await.unwrap()
+        }
+    };
 
-    let (ask_orders_exch1, bid_orders_exch1) = pull_orders(&pair_currencies, &exchange1, num).await;
-    let (ask_orders_exch2, bid_orders_exch2) = pull_orders(&pair_currencies, &exchange2, num).await;
+    let mut rx2 = match exchange1 {
+        Exchange::BINANCE => {
+            let exchange = Binance::new();
+            exchange.pull_orders(&pair_currencies).await.unwrap()
+        }
+        Exchange::BITSTAMP => {
+            let exchange = Binance::new();
+            exchange.pull_orders(&pair_currencies).await.unwrap()
+        }
+    };
+
+    let (ask_orders_exch1, bid_orders_exch1) = rx1.recv().await.unwrap();
+    let (ask_orders_exch2, bid_orders_exch2) = rx2.recv().await.unwrap();
+
+    println!("ask_orders_exch1: {:?}", ask_orders_exch1);
+
+    // Do some other work
+
+    // let (ask_orders_exch1, bid_orders_exch1) = pull_orders(&pair_currencies, &exchange1, num).await;
+    // let (ask_orders_exch2, bid_orders_exch2) = pull_orders(&pair_currencies, &exchange2, num).await;
 
     let mut merged_bids: Vec<Level> = merge_orders(&bid_orders_exch1, &bid_orders_exch2).await;
     let mut merged_asks: Vec<Level> = merge_orders(&ask_orders_exch1, &ask_orders_exch2).await;
@@ -114,7 +161,8 @@ mod tests {
         let sorted_asks = sort_levels(&mut asks, true).await;
         let sorted_bids = sort_levels(&mut bids, true).await;
 
-        let spread = calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap()).await;
+        let spread =
+            calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap()).await;
         assert_eq!(2.72, round_to(spread, 2 as i32))
     }
 }

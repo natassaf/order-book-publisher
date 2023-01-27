@@ -11,12 +11,12 @@ use http::Method;
 
 mod api_objects;
 mod utils;
-mod pull_orders;
+mod exchanges;
 
 
 use api_objects::{Summary, Exchange};
 
-use crate::{api_objects::PairCurrencies, pull_orders::Binance};
+use crate::{api_objects::PairCurrencies, exchanges::Binance};
 
 
 mod book_summary_endpoint;
@@ -49,17 +49,11 @@ impl OrderbookAggregator for MyOrderbookAggregator {
     
         tokio::spawn(async move {
             for i in 0..10{
-                // let binance = Binance::new();
-                // let (write, read) = binance.establish_connection().await;
-            
-
-                // let result = binance.pull_orders(PairCurrencies::ETHBTC, socket).await;
                 let result:Result<Summary, Status> = book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP, i).await;
                 println!("{:?}",i);
                 println!("result: {:?}", result.clone().unwrap());
                 tx.send(result).await.unwrap();
             }
-
         });
 
         Ok(Response::new(ReceiverStream::new(rx)))

@@ -53,7 +53,7 @@ impl Into<String> for Exchange{
     }
 
 }
-
+#[derive(Clone)]
 pub enum PairCurrencies{
     ETHBTC
 }

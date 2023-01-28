@@ -1,7 +1,7 @@
 use orderbook::orderbook_aggregator_server::{OrderbookAggregator, OrderbookAggregatorServer};
-use std::{sync::{Arc}, net::SocketAddr};
+use std::{sync::{Arc}, net::SocketAddr, time::Duration};
 
-use tokio::sync::{mpsc, Mutex};
+use tokio::{sync::{mpsc, Mutex}, time::sleep};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{transport::Server, Request, Response, Status};
 use tonic_web::GrpcWebLayer;
@@ -45,18 +45,20 @@ impl OrderbookAggregator for MyOrderbookAggregator {
     ) -> Result<tonic::Response<Self::BookSummaryStream>, tonic::Status> {
 
         println!("Running book_summsry");
-        let (tx, rx) = mpsc::channel(4);
-    
+        let (tx, mut rx) = mpsc::channel(4);
+        let (tx_local, rx_local) = mpsc::channel(4);
         tokio::spawn(async move {
-            for i in 0..10{
-                let result:Result<Summary, Status> = book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP, i).await;
-                println!("{:?}",i);
-                println!("result: {:?}", result.clone().unwrap());
-                tx.send(result).await.unwrap();
+            loop{
+                let i = 0;
+                book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP, i, tx.clone()).await;
+                let result = rx.recv().await.unwrap();
+                // println!("{:?}",i);
+                // println!("result: {:?}", result.clone().unwrap());
+                tx_local.send(result).await.unwrap();
             }
         });
 
-        Ok(Response::new(ReceiverStream::new(rx)))
+        Ok(Response::new(ReceiverStream::new(rx_local)))
     }
 }
 

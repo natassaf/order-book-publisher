@@ -3,7 +3,6 @@ name = "order-book-service"
 version = "0.1.0"
 edition = "2021"
 
-
 [[bin]]
 path = "src/server.rs"
 name="order-book-server"

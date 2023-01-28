@@ -9,14 +9,13 @@ use tower_http::cors::{Any, CorsLayer};
 use http::Method;
 
 use std::env;
-mod api_objects;
-mod utils;
-mod exchanges;
+pub mod api_objects;
+pub mod utils;
+pub mod exchanges;
 
 
-use api_objects::{Summary, Exchange};
+use api_objects::{Summary, Exchange, PairCurrencies};
 
-use crate::{api_objects::PairCurrencies, exchanges::Binance};
 
 
 mod book_summary_endpoint;

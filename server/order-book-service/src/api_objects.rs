@@ -1,4 +1,4 @@
-use crate::{orderbook, exchanges::data_structs::OfferData};
+use crate::{orderbook, exchanges::OfferData};
 pub use orderbook::{Level, Summary};
 pub type Spread=f64;
 pub type Bids = Vec<Level>;

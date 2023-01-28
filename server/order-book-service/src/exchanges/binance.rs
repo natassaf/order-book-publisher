@@ -1,13 +1,13 @@
-use crate::api_objects::Level;
-use crate::{
-    api_objects::{Asks, Bids, Exchange, PairCurrencies},
-    exchanges::data_structs::DepthStreamData,
-};
+
 use futures_util::StreamExt;
 
 use tokio::sync::mpsc::Sender;
 use tokio_tungstenite::{connect_async, tungstenite};
 use url::Url;
+
+use crate::api_objects::{PairCurrencies,Exchange, Asks, Bids, Level};
+
+use super::DepthStreamData;
 
 static BINANCE_WS_API: &str = "wss://stream.binance.com:9443";
 pub struct Binance {}
@@ -36,7 +36,7 @@ impl Binance {
         pair_currencies: &PairCurrencies,
         tx: Sender<(Vec<Level>, Vec<Level>)>,
     ) -> () {
-        let binance_url = format!("{}/ws/ethbtc@depth5@1000ms", BINANCE_WS_API);
+        let binance_url = format!("{}/ws/ethbtc@depth20@1000ms", BINANCE_WS_API);
         let (socket, response) = connect_async(Url::parse(&binance_url).unwrap())
             .await
             .expect("Can't connect.");
@@ -59,7 +59,7 @@ impl Binance {
                 let parsed_data: DepthStreamData =
                     serde_json::from_str(&msg).expect("Unable to parse message");
                 let data = Self::decode_data(parsed_data, Exchange::BINANCE);
-                println!("data: {:?}", data);
+
                 match tx.send(data).await {
                     Ok(_) => println!("data sent successfully"),
                     Err(e) => println!("error {:?}", e),
@@ -67,22 +67,6 @@ impl Binance {
             }
         });
 
-        // tokio::spawn(async move {
-        //     read_remote.for_each(|message| async {
-        //         let msg = match message {
-        //             Ok(tungstenite::Message::Text(s)) => s,
-        //             _ => {
-        //                 panic!()
-        //             }
-        //         };
-        //         let parsed_data: DepthStreamData =
-        //             serde_json::from_str(&msg).expect("Unable to parse message");
-        //         let data = Self::decode_data(parsed_data, Exchange::BINANCE);
-        //         println!("data: {:?}", data);
-
-        //     })
-        //     .await;
-        // });
     }
 }
 

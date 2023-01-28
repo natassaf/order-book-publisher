@@ -23,3 +23,20 @@ where
     let str_val = String::deserialize(deserializer)?;
     str_val.parse::<f32>().map_err(de::Error::custom)
 }
+
+#[derive(Debug, Deserialize)]
+pub struct Item{
+    pub microtimestamp: String,
+    pub timestamp:String,
+    pub bids: Vec<OfferData>,
+    pub asks: Vec<OfferData>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BitstampResponse{
+    pub channel: String,
+    pub data: Item,
+    pub event: String
+}
+
+

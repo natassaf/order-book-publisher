@@ -8,7 +8,7 @@ use tonic_web::GrpcWebLayer;
 use tower_http::cors::{Any, CorsLayer};
 use http::Method;
 
-
+use std::env;
 mod api_objects;
 mod utils;
 mod exchanges;
@@ -49,8 +49,7 @@ impl OrderbookAggregator for MyOrderbookAggregator {
         let (tx_local, rx_local) = mpsc::channel(4);
         tokio::spawn(async move {
             loop{
-                let i = 0;
-                book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP, i, tx.clone()).await;
+                book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP, tx.clone()).await;
                 let result = rx.recv().await.unwrap();
                 // println!("{:?}",i);
                 // println!("result: {:?}", result.clone().unwrap());
@@ -64,6 +63,10 @@ impl OrderbookAggregator for MyOrderbookAggregator {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let key = "TOKIO_WORKER_THREADS";
+    env::set_var(key, "1");
+
     let addr:SocketAddr = "[::1]:14586".parse()?;
     let my_order_book_aggregator = OrderbookAggregatorServer::new(MyOrderbookAggregator::default());
     println!("OrderbookAggregatorServer running on {:?}", &addr);

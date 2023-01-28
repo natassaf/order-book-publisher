@@ -6,7 +6,7 @@ use crate::{
 use tokio::time::{sleep, Duration};
 use tonic::Status;
 use tokio::sync::{mpsc};
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::{Sender};
 
 async fn calculate_spread(highest_bid: &Level, lowest_ask: &Level) -> Spread {
     lowest_ask.price - highest_bid.price
@@ -70,48 +70,49 @@ pub async fn process<'a>(
     pair_currencies: PairCurrencies,
     exchange1: Exchange,
     exchange2: Exchange,
-    num: usize,
     tx:Sender<Result<Summary, Status>>
 )  {
     tokio::spawn(async move {
+
         let (tx1, mut rx1) = mpsc::channel(1);
         loop{
 
             match exchange1 {
                 Exchange::BINANCE => {
                     let exchange = Binance::new();
-                    exchange.pull_orders(&pair_currencies, tx1).await
+                    exchange.pull_orders(&pair_currencies, tx1.clone()).await // Sender::clone is essentially a reference count increment, comparable to Arc::clone
                 }
                 Exchange::BITSTAMP => {
                     let exchange = Binance::new();
-                    exchange.pull_orders(&pair_currencies, tx1).await
+                    exchange.pull_orders(&pair_currencies, tx1.clone()).await
                 }
             };
 
 
-        let (ask_orders_exch1, bid_orders_exch1) = rx1.recv().await.unwrap();
-        let (ask_orders_exch2, bid_orders_exch2) = pull_orders(&pair_currencies, &exchange2, 1).await;
+            let (ask_orders_exch1, bid_orders_exch1) = rx1.recv().await.unwrap();
+            let (ask_orders_exch2, bid_orders_exch2) = pull_orders(&pair_currencies, &exchange2, 1).await;
 
-        // Do some other work
 
-        // let (ask_orders_exch1, bid_orders_exch1) = pull_orders(&pair_currencies, &exchange1, num).await;
-        // let (ask_orders_exch2, bid_orders_exch2) = pull_orders(&pair_currencies, &exchange2, num).await;
+            // let (ask_orders_exch1, bid_orders_exch1) = pull_orders(&pair_currencies, &exchange1, num).await;
+            // let (ask_orders_exch2, bid_orders_exch2) = pull_orders(&pair_currencies, &exchange2, num).await;
 
-        let mut merged_bids: Vec<Level> = merge_orders(&bid_orders_exch1, &bid_orders_exch2).await;
-        let mut merged_asks: Vec<Level> = merge_orders(&ask_orders_exch1, &ask_orders_exch2).await;
+            let mut merged_bids: Vec<Level> = merge_orders(&bid_orders_exch1, &bid_orders_exch2).await;
+            let mut merged_asks: Vec<Level> = merge_orders(&ask_orders_exch1, &ask_orders_exch2).await;
 
-        let sorted_bids: &Vec<Level> = sort_levels(&mut merged_bids, false).await;
-        let sorted_asks: &Vec<Level> = sort_levels(&mut merged_asks, false).await;
+            let sorted_bids: &Vec<Level> = sort_levels(&mut merged_bids, false).await;
+            let sorted_asks: &Vec<Level> = sort_levels(&mut merged_asks, false).await;
 
-        let highest_bid = sorted_bids.first().unwrap();
-        let lowest_ask = sorted_asks.last().unwrap();
+            let highest_bid = sorted_bids.first().unwrap();
+            let lowest_ask = sorted_asks.last().unwrap();
 
-        let spread = calculate_spread(highest_bid, lowest_ask).await;
-        let spread = round_to(spread, 8);
-        println!("spread {:?}, {:?}, {:?}", spread, lowest_ask, highest_bid);
-        let summary = Summary::new(spread, sorted_bids.clone(), sorted_asks.clone());
-        let _res = tx.send(Ok(summary)).await;
-    }});
+            let spread = calculate_spread(highest_bid, lowest_ask).await;
+            let spread = round_to(spread, 8);
+            println!("spread {:?}, {:?}, {:?}", spread, lowest_ask, highest_bid);
+            let summary = Summary::new(spread, sorted_bids.clone(), sorted_asks.clone());
+            let _res = tx.send(Ok(summary)).await;
+        }
+    }
+);
 }
 
 #[cfg(test)]

@@ -3,8 +3,6 @@ pub use orderbook::{Level, Summary};
 pub type Spread=f64;
 pub type Bids = Vec<Level>;
 pub type Asks = Vec<Level>;
-pub type Price = f64;
-pub type Amount = f64;
 
 impl Summary {
     pub fn new(spread: Spread, bids: Vec<Level>, asks: Vec<Level>) -> Self {

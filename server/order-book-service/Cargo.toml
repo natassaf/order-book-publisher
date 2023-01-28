@@ -3,9 +3,6 @@ name = "order-book-service"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-path="src/main.rs"
-name="connect-exchanges"
 
 [[bin]]
 path = "src/server.rs"
@@ -28,7 +25,6 @@ futures-util = "0.3.25"
 serde_json = "1.0.91"
 serde = "1.0.152"
 serde_derive = "1.0.152"
-serde_yaml = "0.9.17"
 
 [build-dependencies]
 tonic-build = "0.8.4"

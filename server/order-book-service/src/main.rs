@@ -19,7 +19,7 @@ async fn main(){
     for (ref header, header_value) in response.headers() {
         println!("- {}: {:?}", header, header_value);
     }
-    let (write_remote, read_remote) = socket.split();
+    let (_, read_remote) = socket.split();
     read_remote.for_each(|message| async {
         let data = message.unwrap().into_data();
         tokio::io::stdout().write_all(&data).await.unwrap();

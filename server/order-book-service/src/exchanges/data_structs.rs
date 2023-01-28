@@ -1,24 +1,4 @@
-// use serde_derive::Deserialize;
-
-// #[derive(Deserialize, Debug)]
-// pub struct BinanceResponse {
-//     asks: Vec<Entries>,
-//     bids:Vec<Entries>
-// }
-
-// #[derive(Deserialize, Debug)]
-// pub struct Entries {
-//     entries: Vec<Order>,
-// }
-
-// #[derive(Deserialize, Debug)]
-// pub struct Order{
-//     price:String,
-//     amount:String
-// }
-
-use serde::de;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, de};
 use serde_derive::Deserialize;
 
 

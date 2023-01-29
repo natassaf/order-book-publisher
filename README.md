@@ -1,9 +1,7 @@
 #order-book-publisher
 
 # Order Book Publisher
-2
-A system composed of a client and a server. The client is writen in VueJS and provides an very basic interface were the user can select 
- tokens and exchanges and retrieve an order book with the top ten bids and top ten asks and the spread.
+An order book and spread publisher for binance and bitstamp exchanges. The client exposes a simple form where the user can enter a symbol name and retrieve a sample of the combined order book containing the lowest 10 asks and the highest 10 bids from both exchanges.
 
 ## Client
 *************
@@ -27,5 +25,4 @@ protoc --proto_path=protos --js_out=import_style=commonjs,binary:client/spread-p
 ``` 
 cargo build 
 cargo run --bin order-book-server 
-cargo run --bin 
 ```

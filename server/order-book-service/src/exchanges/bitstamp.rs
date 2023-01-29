@@ -91,7 +91,7 @@ impl BitstampConnection {
                 let data = Self::decode_data(parsed_data, Exchange::BITSTAMP);
 
                 match tx.send(data).await {
-                    Ok(_) => (),
+                    Ok(_) => println!("bitstamp data sent successfully"),
                     Err(e) => println!("error {:?}", e),
                 };
             }

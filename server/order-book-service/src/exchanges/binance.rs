@@ -89,7 +89,7 @@ impl BinanceConnection {
                 let data = Self::decode_data(parsed_data, Exchange::BINANCE);
 
                 match tx.send(data).await {
-                    Ok(_) => println!("data sent successfully"),
+                    Ok(_) => println!("binance data sent successfully"),
                     Err(e) => println!("error {:?}", e),
                 };
             }

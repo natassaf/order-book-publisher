@@ -45,7 +45,7 @@ async fn connect_to_binance(pair_currencies: &PairCurrencies) -> Arc<Mutex<Binan
     let url = BinanceConnection::compose_binance_depth_url(
         pair_currencies,
         20,
-        crate::exchanges::BinanceSpeeds::ThousandMill,
+        crate::exchanges::BinanceSpeeds::HundredMill,
     );
     Arc::new(Mutex::new(BinanceConnection::new(url).await))
 }

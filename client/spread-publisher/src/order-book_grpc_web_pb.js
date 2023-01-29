@@ -77,16 +77,16 @@ proto.orderbook.OrderbookAggregatorPromiseClient =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.orderbook.Empty,
+ *   !proto.orderbook.BookSummaryRequest,
  *   !proto.orderbook.Summary>}
  */
 const methodDescriptor_OrderbookAggregator_BookSummary = new grpc.web.MethodDescriptor(
   '/orderbook.OrderbookAggregator/BookSummary',
   grpc.web.MethodType.SERVER_STREAMING,
-  proto.orderbook.Empty,
+  proto.orderbook.BookSummaryRequest,
   proto.orderbook.Summary,
   /**
-   * @param {!proto.orderbook.Empty} request
+   * @param {!proto.orderbook.BookSummaryRequest} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -97,7 +97,7 @@ const methodDescriptor_OrderbookAggregator_BookSummary = new grpc.web.MethodDesc
 
 
 /**
- * @param {!proto.orderbook.Empty} request The request proto
+ * @param {!proto.orderbook.BookSummaryRequest} request The request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
  * @return {!grpc.web.ClientReadableStream<!proto.orderbook.Summary>}
@@ -114,7 +114,7 @@ proto.orderbook.OrderbookAggregatorClient.prototype.bookSummary =
 
 
 /**
- * @param {!proto.orderbook.Empty} request The request proto
+ * @param {!proto.orderbook.BookSummaryRequest} request The request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
  * @return {!grpc.web.ClientReadableStream<!proto.orderbook.Summary>}

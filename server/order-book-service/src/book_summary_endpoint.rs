@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::exchanges::BitstampConnection;
 use crate::utils::round_to;
 use crate::{
-    api_objects::{Asks, Bids, Exchange, Level, PairCurrencies, Spread, Summary},
+    api_objects::{Asks, Bids, Exchange, Level, Spread, Summary},
     exchanges::BinanceConnection,
 };
 use tokio::sync::mpsc::Sender;
@@ -11,12 +11,42 @@ use tokio::sync::{mpsc, Mutex};
 use tokio::time::{sleep, Duration};
 use tonic::Status;
 
-async fn calculate_spread(highest_bid: &Level, lowest_ask: &Level) -> Spread {
-    lowest_ask.price - highest_bid.price
+#[allow(dead_code)]
+async fn get_lowest_asks_highest_bids_per_exchange_10(
+    ask_orders_exch1: Asks,
+    bid_orders_exch1: Bids,
+    ask_orders_exch2: Asks,
+    bid_orders_exch2: Bids,
+) -> (Asks, Bids) {
+    let num_asks1 = ask_orders_exch1.len();
+    let top_10_ask_orders_exch1 =
+        sort_levels(ask_orders_exch1, false).await[num_asks1 - 10..num_asks1].to_vec();
+
+    let num_asks2 = ask_orders_exch2.len();
+    let top_10_ask_orders_exch2 =
+        sort_levels(ask_orders_exch2, false).await[num_asks2 - 10..num_asks2].to_vec();
+
+    let top_10_bids_orders_exch1 = sort_levels(bid_orders_exch1, false).await[0..10].to_vec();
+
+    let top_10_bids_orders_exch2 = sort_levels(bid_orders_exch2, false).await[0..10].to_vec();
+
+    let merged_sorted_bids = {
+        let merged_bids: Vec<Level> =
+            merge_orders(&top_10_bids_orders_exch1, &top_10_bids_orders_exch2).await;
+        let sorted_bids: Vec<Level> = sort_levels(merged_bids, false).await;
+        sorted_bids
+    };
+    let merged_sorted_asks = {
+        let merged_asks: Vec<Level> =
+            merge_orders(&top_10_ask_orders_exch1, &top_10_ask_orders_exch2).await;
+        let sorted_asks: Vec<Level> = sort_levels(merged_asks, false).await;
+        sorted_asks
+    };
+    (merged_sorted_asks, merged_sorted_bids)
 }
 
+#[allow(dead_code)]
 async fn pull_orders(
-    pair_currencies: &PairCurrencies,
     exchange: &Exchange,
     num: usize,
 ) -> (Asks, Bids) {
@@ -56,6 +86,10 @@ async fn pull_orders(
     }
 }
 
+async fn calculate_spread(highest_bid: &Level, lowest_ask: &Level) -> Spread {
+    lowest_ask.price - highest_bid.price
+}
+
 async fn sort_levels(mut orders: Vec<Level>, ascending: bool) -> Vec<Level> {
     if ascending {
         orders.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
@@ -69,36 +103,28 @@ async fn merge_orders(orders1: &Vec<Level>, orders2: &Vec<Level>) -> Vec<Level> 
     [orders1.clone(), orders2.clone()].concat()
 }
 
-async fn get_lowest_asks_highest_bids_per_exchange_10(
+async fn get_merged_sorted_orders(
     ask_orders_exch1: Asks,
     bid_orders_exch1: Bids,
     ask_orders_exch2: Asks,
     bid_orders_exch2: Bids,
+    num_bids_to_return:usize,
+    num_asks_to_return:usize
 ) -> (Asks, Bids) {
-    let num_asks1 = ask_orders_exch1.len();
-    let top_10_ask_orders_exch1 =
-        sort_levels(ask_orders_exch1, false).await[num_asks1 - 10..num_asks1].to_vec();
-
-    let num_asks2 = ask_orders_exch2.len();
-    let top_10_ask_orders_exch2 =
-        sort_levels(ask_orders_exch2, false).await[num_asks2 - 10..num_asks2].to_vec();
-
-    let top_10_bids_orders_exch1 = sort_levels(bid_orders_exch1, false).await[0..10].to_vec();
-
-    let top_10_bids_orders_exch2 = sort_levels(bid_orders_exch2, false).await[0..10].to_vec();
-
     let merged_sorted_bids = {
-        let merged_bids: Vec<Level> =
-            merge_orders(&top_10_bids_orders_exch1, &top_10_bids_orders_exch2).await;
+        let merged_bids: Vec<Level> = merge_orders(&bid_orders_exch1, &bid_orders_exch2).await;
         let sorted_bids: Vec<Level> = sort_levels(merged_bids, false).await;
-        sorted_bids
+        let lowest = sorted_bids[0..num_bids_to_return].to_vec();
+        lowest
     };
     let merged_sorted_asks = {
-        let merged_asks: Vec<Level> =
-            merge_orders(&top_10_ask_orders_exch1, &top_10_ask_orders_exch2).await;
+        let merged_asks: Vec<Level> = merge_orders(&ask_orders_exch1, &ask_orders_exch2).await;
         let sorted_asks: Vec<Level> = sort_levels(merged_asks, false).await;
-        sorted_asks
+        let num_asks = sorted_asks.len();
+        let hightest = sorted_asks[num_asks - num_asks_to_return..num_asks].to_vec();
+        hightest
     };
+
     (merged_sorted_asks, merged_sorted_bids)
 }
 
@@ -107,26 +133,38 @@ pub async fn process<'a>(
     exchange2_connection: Arc<Mutex<BitstampConnection>>,
     tx: Sender<Result<Summary, Status>>,
 ) {
-
     let (tx1, mut rx1) = mpsc::channel(4);
     let (tx2, mut rx2) = mpsc::channel(4);
     tokio::spawn(async move {
         loop {
-            exchange1_connection.lock().await.clone().pull_orders(tx1.clone()).await;
-            exchange2_connection.lock().await.clone().pull_orders(tx2.clone()).await;
+            exchange1_connection
+                .lock()
+                .await
+                .clone()
+                .pull_orders(tx1.clone())
+                .await;
+            exchange2_connection
+                .lock()
+                .await
+                .clone()
+                .pull_orders(tx2.clone())
+                .await;
 
             let (ask_orders_exch1, bid_orders_exch1): (Asks, Bids) = rx1.recv().await.unwrap();
             let (ask_orders_exch2, bid_orders_exch2): (Asks, Bids) = rx2.recv().await.unwrap();
 
-            let (merged_sorted_asks, merged_sorted_bids) =
-                get_lowest_asks_highest_bids_per_exchange_10(
-                    ask_orders_exch1,
-                    bid_orders_exch1,
-                    ask_orders_exch2,
-                    bid_orders_exch2,
-                )
-                .await;
-
+            // get the 10 highest bids and 10 lowest asks in descending order
+            let num_bids_to_return = 10;
+            let num_asks_to_return = 10;
+            let (merged_sorted_asks, merged_sorted_bids) = get_merged_sorted_orders(
+                ask_orders_exch1,
+                bid_orders_exch1,
+                ask_orders_exch2,
+                bid_orders_exch2,
+                num_bids_to_return,
+                num_asks_to_return
+            )
+            .await;
             let highest_bid = merged_sorted_bids.first().unwrap();
             let lowest_ask = merged_sorted_asks.last().unwrap();
 

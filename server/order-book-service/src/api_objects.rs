@@ -1,4 +1,4 @@
-use crate::{orderbook, exchanges::OfferData};
+use crate::{orderbook::{self}, exchanges::OfferData};
 pub use orderbook::{Level, Summary};
 pub type Spread=f64;
 pub type Bids = Vec<Level>;
@@ -51,7 +51,8 @@ impl Into<String> for Exchange{
     }
 
 }
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub enum PairCurrencies{
-    ETHBTC
+    ETHBTC,
+    UNKNOWN(String)
 }

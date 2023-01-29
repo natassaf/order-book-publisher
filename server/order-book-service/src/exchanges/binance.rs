@@ -1,27 +1,26 @@
 use std::sync::Arc;
 
-use futures_util::{
-    stream::{SplitSink, SplitStream},
-    StreamExt,
-};
+use futures_util::{stream::SplitStream, StreamExt};
 
-use tokio::{net::TcpStream, sync::{mpsc::Sender, Mutex}};
+use tokio::{
+    net::TcpStream,
+    sync::{mpsc::Sender, Mutex},
+};
 use tokio_tungstenite::{
     connect_async,
-    tungstenite::{self, Message},
+    tungstenite::{self},
     MaybeTlsStream, WebSocketStream,
 };
 use url::Url;
 
 use crate::api_objects::{Asks, Bids, Exchange, Level, PairCurrencies};
 
-use super::{BinanceSpeeds, DepthStreamData};
+use super::{BinanceResponseData, BinanceSpeeds};
 
 static BINANCE_WS_API: &str = "wss://stream.binance.com:9443";
 
 #[derive(Clone)]
 pub struct BinanceConnection {
-    write_to_socket: Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>>,
     read_from_socket: Arc<Mutex<SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>>>,
 }
 
@@ -32,25 +31,24 @@ impl BinanceConnection {
             .expect("Can't connect.");
         println!("Connected to binance stream.");
         println!("HTTP status code: {}", response.status());
-        println!("Response headers:");
-        for (ref header, header_value) in response.headers() {
-            println!("- {}: {:?}", header, header_value);
-        }
-        let (write_to_socket, read_from_socket) = socket.split();
+
+        let (_write_to_socket, read_from_socket) = socket.split();
         BinanceConnection {
-            write_to_socket: Arc::new(Mutex::new(write_to_socket)),
             read_from_socket: Arc::new(Mutex::new(read_from_socket)),
         }
     }
 
     pub fn compose_binance_depth_url(
-        symbol: PairCurrencies,
+        symbol: &PairCurrencies,
         levels: usize,
         speed: BinanceSpeeds,
     ) -> String {
         let symbol = match symbol {
             PairCurrencies::ETHBTC => "ethbtc",
-            _ => panic!("Symbol not found"),
+            PairCurrencies::UNKNOWN(input_text) => {
+                println!("This symbol is not explicitly handled for binance");
+                &input_text
+            }
         };
 
         let speed = match speed {
@@ -63,7 +61,7 @@ impl BinanceConnection {
         )
     }
 
-    pub fn decode_data(data: DepthStreamData, exchange: Exchange) -> (Asks, Bids) {
+    pub fn decode_data(data: BinanceResponseData, exchange: Exchange) -> (Asks, Bids) {
         let bids = data
             .bids
             .into_iter()
@@ -77,26 +75,21 @@ impl BinanceConnection {
         (asks, bids)
     }
 
-    pub async fn establish_connection() {}
-
-    pub async fn pull_orders<'a>(
-        self,
-        tx: Sender<(Vec<Level>, Vec<Level>)>,
-    ) -> () {
+    pub async fn pull_orders<'a>(self, tx: Sender<(Vec<Level>, Vec<Level>)>) -> () {
         tokio::spawn(async move {
             while let Some(message) = self.read_from_socket.lock().await.next().await {
                 let msg = match message {
                     Ok(tungstenite::Message::Text(s)) => s,
                     _ => {
-                        panic!()
+                        panic!("Unable to read data from binance")
                     }
                 };
-                let parsed_data: DepthStreamData =
-                    serde_json::from_str(&msg).expect("Unable to parse message");
+                let parsed_data: BinanceResponseData =
+                    serde_json::from_str(&msg).expect("Unable to parse message from binance ");
                 let data = Self::decode_data(parsed_data, Exchange::BINANCE);
 
                 match tx.send(data).await {
-                    Ok(_) => println!("data sent successfully binance"),
+                    Ok(_) => println!("data sent successfully"),
                     Err(e) => println!("error {:?}", e),
                 };
             }

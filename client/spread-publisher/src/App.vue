@@ -6,15 +6,18 @@
       <form @submit.prevent="submitForm">
         <div class="box">
 
-          <h3> Select market tokens </h3>
+          <h3> Select market tokens symbol </h3>
 
-          <div v-for="token in availableTokens" :key="token">
+          <!-- <div v-for="token in availableTokens" :key="token">
             <input type="checkbox" :id="token" :value="token" v-model="selectedTokens">
             <label>{{ token }}</label>
+          </div> -->
+          <div>
+            <input type="text"  v-model.trim="symbol">
           </div>
           <br>
           <div>
-            <button @click="saveTokenChoices">Submit</button>
+            <button @click="saveSymbol">Submit</button>
           </div>
 
         </div>
@@ -22,9 +25,8 @@
 
       <div class="box">
         <b>Exchanges: </b> Binance, Bitstamp <br><br>
-        <b>Selected tokens: </b> {{ selectedTokensFlag? tokens.join(" ") : ""}} <br> <br>
-        <button @click="requestConnection"> Connect with exchanges</button> <br><br>
-        <div v-if="connectionFlag">
+        <b>Selected tokens: </b> {{ selectedSymbolFlag? selectedSymbol : ""}} <br> <br>
+        <div v-if="selectedSymbol">
           <button @click="requestOrderBook"> Request order book </button>
           {{ loadingFlag? "Loading...": "" }}
         </div>
@@ -42,7 +44,7 @@
 <script>
 import OrderBookVisualizer from './components/OrderBookVisualizer.vue';
 import { OrderbookAggregatorClient } from './order-book_grpc_web_pb';
-import { Empty } from "./order-book_pb";
+import {BookSummaryRequest } from "./order-book_pb";
 
 
 export default {
@@ -52,30 +54,32 @@ export default {
   },
   data() {
     return {
-      availableTokens: ["ETHBTC"],
-      selectedTokens: [],
-      selectedTokensFlag: false,
-      tokens: [],
+      selectedSymbolFlag: false,
       connectionFlag: false,
       loadingFlag: false,
       orderBookResponse: false,
       response: null,
       items: [],
-      spread: null
+      spread: null,
+      symbol:null,
+      selectedSymbol:null
     }
   },
   methods: {
-    saveTokenChoices() {
-      this.tokens = this.selectedTokens;
-      this.selectedTokensFlag = !this.selectedTokensFlag;
-    },
+    saveSymbol(){
+      this.selectedSymbol = this.symbol; 
+      this.selectedSymbolFlag = true;
+    }
+    ,
     requestConnection() {
       this.connectionFlag = true;
     },
     requestOrderBook() {
       this.loadingFlag = true;
       this.orderBookResponse = true;
-      this.response = this.client.bookSummary(new Empty()).on("data",
+      let  bookSummaryRequest = new BookSummaryRequest();
+      bookSummaryRequest.setSymbol(this.selectedSymbol);
+      this.response = this.client.bookSummary(bookSummaryRequest).on("data",
         response => {
           let spread = response.getSpread();
           let bids = response.getBidsList();
@@ -94,6 +98,7 @@ export default {
 
           this.items = items;
           this.spread = spread;
+          this.loadingFlag=false;
         });
 
     }

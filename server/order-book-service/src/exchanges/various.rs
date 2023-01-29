@@ -1,10 +1,6 @@
 use serde::{de, Deserialize, Deserializer};
 use serde_derive::Deserialize;
 
-use tokio::{ sync::mpsc::Sender, io};
-
-use crate::api_objects::Level;
-
 #[derive(Debug, Deserialize)]
 pub struct OfferData {
     #[serde(deserialize_with = "de_float_from_str")]
@@ -14,7 +10,7 @@ pub struct OfferData {
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct DepthStreamData {
+pub struct BinanceResponseData {
     pub last_update_id: usize,
     pub bids: Vec<OfferData>,
     pub asks: Vec<OfferData>,
@@ -36,7 +32,7 @@ pub struct Item {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct BitstampResponse {
+pub struct BitstampResponseData {
     pub channel: String,
     pub data: Item,
     pub event: String,

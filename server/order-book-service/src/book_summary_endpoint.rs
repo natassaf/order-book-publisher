@@ -125,7 +125,7 @@ pub async fn process<'a>(
             match exchange2 {
                 Exchange::BINANCE => {
                     let exchange = Binance::new();
-                    exchange.pull_orders(&pair_currencies, tx2.clone()).await // Sender::clone is essentially a reference count increment, comparable to Arc::clone
+                    exchange.pull_orders(&pair_currencies, tx2.clone()).await 
                 }
                 Exchange::BITSTAMP => {
                     let exchange = Bitstamp::new();

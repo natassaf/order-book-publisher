@@ -19,14 +19,6 @@ protoc --proto_path=protos --js_out=import_style=commonjs,binary:client/spread-p
 
 ```
 
-*** Deploy Envoy Docker Container ***
-``` 
-cd envoy
-docker build -t envoy-img .
-sudo docker run  -p 8080:8080 --net=host  envoy-img
-
-``` 
-
 ## Server
 *************
 

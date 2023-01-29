@@ -1,54 +1,40 @@
-use futures_channel::mpsc::UnboundedReceiver;
-use futures_util::{SinkExt, StreamExt};
+use std::sync::Arc;
+
+use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 use serde_json::json;
-use tokio::sync::{futures, mpsc};
-use tokio_stream::wrappers::UnboundedReceiverStream;
+use tokio::{net::TcpStream, sync::Mutex};
 use tokio_tungstenite::{
     connect_async,
-    tungstenite::{self, Message},
+    tungstenite::{Message}, WebSocketStream, MaybeTlsStream,
 };
-use url::Url;
+
 
 use tokio::sync::mpsc::Sender;
 
 use crate::{
-    api_objects::{Exchange, Level, PairCurrencies, Bids, Asks},
+    api_objects::{Exchange, Level, Bids, Asks},
     exchanges::BitstampResponse,
 };
 
-pub struct Bitstamp {}
+#[derive(Clone)]
+pub struct BitstampConnection {
+    write_to_socket: Arc<Mutex<SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>>>,
+    read_from_socket: Arc<Mutex<SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>>>
+}
 
-impl Bitstamp {
-    pub fn new() -> Self {
-        Bitstamp {}
-    }
-
-    pub fn decode_data(data: BitstampResponse, exchange: Exchange) -> (Asks, Bids) {
-        let bids:Vec<Level> = data.data.bids.into_iter().map(|offer| Level::from_offer_data(&exchange, offer)).collect();
-        let asks:Vec<Level> = data.data.asks.into_iter().map(|offer| Level::from_offer_data(&exchange, offer)).collect();
-        (asks[0..10].into(), bids[0..10].into())
-    }
-
-    pub async fn pull_orders(
-        &self,
-        pair_currencies: &PairCurrencies,
-        tx: Sender<(Vec<Level>, Vec<Level>)>,
-    ) {
-        let (socket, _response) = connect_async(Url::parse("wss://ws.bitstamp.net").unwrap())
-            .await
-            .expect("Can't connect");
-
-        let url = "wss://ws.bitstamp.net";
-        let (ws_stream, _) = connect_async(url).await.unwrap();
-        let (mut write, mut read) = ws_stream.split();
-        println!("pulling orders from bitstamp");
-        write
+impl BitstampConnection {
+    pub async fn new(data_channel: String) -> Self {
+        let exchange_url = "wss://ws.bitstamp.net";
+        let (ws_stream, _) = connect_async(exchange_url).await.unwrap();
+        let (mut write_to_socket, mut read_from_socket) = ws_stream.split();
+        
+        write_to_socket
             .send(
                 Message::Text(
                     json!({
                         "event": "bts:subscribe",
                         "data": {
-                            "channel": "order_book_ethbtc"
+                            "channel": data_channel
                         }
                     })
                     .to_string(),
@@ -57,9 +43,27 @@ impl Bitstamp {
             )
             .await
             .unwrap();
-        read.next().await;
+        println!("establiched connection {}", read_from_socket.next().await.unwrap().unwrap());
+        
+        BitstampConnection {
+            write_to_socket: Arc::new(Mutex::new(write_to_socket)),
+            read_from_socket: Arc::new(Mutex::new(read_from_socket))
+        }
+    }
+
+
+    pub fn decode_data(data: BitstampResponse, exchange: Exchange) -> (Asks, Bids) {
+        let bids:Vec<Level> = data.data.bids.into_iter().map(|offer| Level::from_offer_data(&exchange, offer)).collect();
+        let asks:Vec<Level> = data.data.asks.into_iter().map(|offer| Level::from_offer_data(&exchange, offer)).collect();
+        (asks[0..10].into(), bids[0..10].into())
+    }
+
+    pub async fn pull_orders(
+        self,
+        tx: Sender<(Vec<Level>, Vec<Level>)>,
+    ) {
         tokio::spawn(async move {
-            while let Some(message) = read.next().await {
+            while let Some(message) = self.read_from_socket.lock().await.next().await {
                 let msg = match message {
                     Ok(Message::Text(s)) => s,
                     _ => {

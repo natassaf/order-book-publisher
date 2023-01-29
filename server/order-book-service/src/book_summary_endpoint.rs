@@ -1,11 +1,13 @@
-use crate::exchanges::bitstamp::Bitstamp;
+use std::sync::Arc;
+
+use crate::exchanges::BitstampConnection;
 use crate::utils::round_to;
 use crate::{
     api_objects::{Asks, Bids, Exchange, Level, PairCurrencies, Spread, Summary},
-    exchanges::Binance,
+    exchanges::BinanceConnection,
 };
-use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
+use tokio::sync::{mpsc, Mutex};
 use tokio::time::{sleep, Duration};
 use tonic::Status;
 
@@ -101,37 +103,17 @@ async fn get_lowest_asks_highest_bids_per_exchange_10(
 }
 
 pub async fn process<'a>(
-    pair_currencies: PairCurrencies,
-    exchange1: Exchange,
-    exchange2: Exchange,
+    exchange1_connection: Arc<Mutex<BinanceConnection>>,
+    exchange2_connection: Arc<Mutex<BitstampConnection>>,
     tx: Sender<Result<Summary, Status>>,
 ) {
-    // open the socket for each exchange here
-    tokio::spawn(async move {
-        let (tx1, mut rx1) = mpsc::channel(4);
-        let (tx2, mut rx2) = mpsc::channel(4);
-        loop {
-            match exchange1 {
-                Exchange::BINANCE => {
-                    let exchange = Binance::new();
-                    exchange.pull_orders(&pair_currencies, tx1.clone()).await // Sender::clone is essentially a reference count increment, comparable to Arc::clone
-                }
-                Exchange::BITSTAMP => {
-                    let exchange = Bitstamp::new();
-                    exchange.pull_orders(&pair_currencies, tx1.clone()).await
-                }
-            };
 
-            match exchange2 {
-                Exchange::BINANCE => {
-                    let exchange = Binance::new();
-                    exchange.pull_orders(&pair_currencies, tx2.clone()).await 
-                }
-                Exchange::BITSTAMP => {
-                    let exchange = Bitstamp::new();
-                    exchange.pull_orders(&pair_currencies, tx2.clone()).await
-                }
-            };
+    let (tx1, mut rx1) = mpsc::channel(4);
+    let (tx2, mut rx2) = mpsc::channel(4);
+    tokio::spawn(async move {
+        loop {
+            exchange1_connection.lock().await.clone().pull_orders(tx1.clone()).await;
+            exchange2_connection.lock().await.clone().pull_orders(tx2.clone()).await;
 
             let (ask_orders_exch1, bid_orders_exch1): (Asks, Bids) = rx1.recv().await.unwrap();
             let (ask_orders_exch2, bid_orders_exch2): (Asks, Bids) = rx2.recv().await.unwrap();

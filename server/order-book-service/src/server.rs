@@ -16,6 +16,8 @@ pub mod exchanges;
 
 use api_objects::{Summary, Exchange, PairCurrencies};
 
+use crate::exchanges::{BinanceConnection, BitstampConnection};
+
 
 
 mod book_summary_endpoint;
@@ -34,6 +36,24 @@ impl MyOrderbookAggregator {
     }
 }
 
+
+async fn connect_to_bitstamp(pair_currencies: PairCurrencies)-> Arc<Mutex<BitstampConnection>>{
+    Arc::new(Mutex::new(
+        BitstampConnection::new("order_book_ethbtc".to_string()).await,
+    ))
+}
+
+
+async fn connect_to_binance(pair_currencies: PairCurrencies)-> Arc<Mutex<BinanceConnection>>{
+    let url = BinanceConnection::compose_binance_depth_url(
+        pair_currencies,
+        20,
+        crate::exchanges::BinanceSpeeds::ThousandMill,
+    );
+    Arc::new(Mutex::new(BinanceConnection::new(url).await))
+}
+
+
 #[tonic::async_trait]
 impl OrderbookAggregator for MyOrderbookAggregator {
     type BookSummaryStream = ReceiverStream<Result<Summary, Status>>;
@@ -43,15 +63,16 @@ impl OrderbookAggregator for MyOrderbookAggregator {
         request: Request<orderbook::Empty>,
     ) -> Result<tonic::Response<Self::BookSummaryStream>, tonic::Status> {
 
-        println!("Running book_summsry");
         let (tx, mut rx) = mpsc::channel(4);
         let (tx_local, rx_local) = mpsc::channel(4);
+
+        let exchange1_connection = connect_to_binance(PairCurrencies::ETHBTC).await;
+        let exchange2_connection = connect_to_bitstamp(PairCurrencies::ETHBTC).await;
+
         tokio::spawn(async move {
             loop{
-                book_summary_endpoint::process(PairCurrencies::ETHBTC, Exchange::BINANCE, Exchange::BITSTAMP, tx.clone()).await;
+                book_summary_endpoint::process(exchange1_connection.clone(), exchange2_connection.clone(), tx.clone()).await;
                 let result = rx.recv().await.unwrap();
-                // println!("{:?}",i);
-                // println!("result: {:?}", result.clone().unwrap());
                 tx_local.send(result).await.unwrap();
             }
         });

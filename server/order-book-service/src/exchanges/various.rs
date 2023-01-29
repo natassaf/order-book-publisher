@@ -1,6 +1,9 @@
-use serde::{Deserialize, Deserializer, de};
+use serde::{de, Deserialize, Deserializer};
 use serde_derive::Deserialize;
 
+use tokio::{ sync::mpsc::Sender, io};
+
+use crate::api_objects::Level;
 
 #[derive(Debug, Deserialize)]
 pub struct OfferData {
@@ -25,18 +28,24 @@ where
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Item{
+pub struct Item {
     pub microtimestamp: String,
-    pub timestamp:String,
+    pub timestamp: String,
     pub bids: Vec<OfferData>,
     pub asks: Vec<OfferData>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct BitstampResponse{
+pub struct BitstampResponse {
     pub channel: String,
     pub data: Item,
-    pub event: String
+    pub event: String,
+}
+
+#[derive(Copy, Clone)]
+pub enum BinanceSpeeds {
+    HundredMill = 100,
+    ThousandMill = 1000,
 }
 
 

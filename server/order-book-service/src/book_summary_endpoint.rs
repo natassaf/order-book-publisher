@@ -169,8 +169,7 @@ pub async fn process<'a>(
                 bid_orders_exch2,
                 num_bids_to_return,
                 num_asks_to_return
-            )
-            .await;
+            ).await;
             let highest_bid = merged_sorted_bids.first().unwrap();
             let lowest_ask = merged_sorted_asks.last().unwrap();
 
@@ -179,8 +178,8 @@ pub async fn process<'a>(
             // println!("spread {:?}, {:?}, {:?}", spread, lowest_ask, highest_bid);
             let summary = Summary::new(
                 spread,
-                merged_sorted_bids.clone(),
-                merged_sorted_asks.clone(),
+                merged_sorted_bids,
+                merged_sorted_asks,
             );
             let _res = tx.send(Ok(summary)).await;
         }

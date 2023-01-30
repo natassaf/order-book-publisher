@@ -114,14 +114,20 @@ async fn get_merged_sorted_orders(
     let merged_sorted_bids = {
         let merged_bids: Vec<Level> = merge_orders(&bid_orders_exch1, &bid_orders_exch2).await;
         let sorted_bids: Vec<Level> = sort_levels(merged_bids, false).await;
-        let lowest = sorted_bids[0..num_bids_to_return].to_vec();
+        let num_bids = sorted_bids.len();
+
+        let lowest = if num_bids_to_return < num_bids{
+            sorted_bids[(num_bids-num_bids_to_return)..num_bids].to_vec()
+        }
+        else{
+            sorted_bids
+        };
         lowest
     };
     let merged_sorted_asks = {
         let merged_asks: Vec<Level> = merge_orders(&ask_orders_exch1, &ask_orders_exch2).await;
         let sorted_asks: Vec<Level> = sort_levels(merged_asks, false).await;
-        let num_asks = sorted_asks.len();
-        let hightest = sorted_asks[num_asks - num_asks_to_return..num_asks].to_vec();
+        let hightest = sorted_asks[0..num_asks_to_return].to_vec();
         hightest
     };
 
@@ -231,6 +237,25 @@ mod tests {
 
         let spread =
             calculate_spread(sorted_bids.last().unwrap(), sorted_asks.first().unwrap()).await;
+        assert_eq!(2.72, round_to(spread, 2 as i32))
+    }
+
+    #[tokio::test]
+    async fn test_get_merged_sorted_orders() {
+        let order1: Level = Level::new("binance".to_string(), 8491.25, 0.008);
+        let order2 = Level::new("bitstamp".to_string(), 8496.37, 0.0303);
+        let order3: Level = Level::new("binance".to_string(), 8488.53, 0.002);
+        let order4 = Level::new("bitstamp".to_string(), 8484.71, 1.0959);
+
+        // ascending order
+        let _asks = vec![order1.clone(), order2.clone()];
+        let _bids = vec![order3.clone(), order4.clone()];
+
+        let (merged_sorted_asks, merged_sorted_bids) = get_merged_sorted_orders(vec![order1], vec![order3], vec![order2], vec![order4], 2, 2).await;
+        let highest_bid = merged_sorted_bids.first().unwrap();
+        let lowest_ask = merged_sorted_asks.last().unwrap();
+
+        let spread = calculate_spread(highest_bid, lowest_ask).await;
         assert_eq!(2.72, round_to(spread, 2 as i32))
     }
 }
